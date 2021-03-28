@@ -1,5 +1,5 @@
-import re
 from pypinyin import lazy_pinyin
+import re
 
 
 class WordTrie:
@@ -71,7 +71,10 @@ class WordTrie:
         else:
             tmp_node_key = ''
         if not build and 're' in tmp_node_key:
-            tmp_node_key = tmp_node_key.replace('re', '')
+            # tmp_node_key = tmp_node_key.replace('re', '')
+            tmp_node_key = tmp_node_key.replace('re', '^')
+            # print(str(tmp_node_key))
+            # 搜索
             result = re.findall(tmp_node_key, string[index:])
             if result:
                 result = result[0]
@@ -130,4 +133,6 @@ def build_sentence_word_dict(word_dict=None, fuzzy=True):
         for i in v:
             tmp_trie.insert(i)
         sentence_word_dict[k] = tmp_trie
+    """for k,v in sentence_word_dict.items():    
+        print(k,v)"""
     return sentence_word_dict

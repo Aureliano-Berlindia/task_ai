@@ -10,18 +10,20 @@ class SentenceTplTrie:
         """
         由于python dict采用hash存储，因此用dict实现trie树，缺点，就是内存占用稍大。
         """
-        self.root = dict()
+
         self.word_dict = word_dict
 
-    def build(self, sentence_tpl_dict=None, common_key=None):
+    def build(self, sentence_tpl_dict=None, common_key=None, text=None):
         if sentence_tpl_dict is None:
             sentence_tpl_dict = {}
         if not (sentence_tpl_dict and isinstance(sentence_tpl_dict, dict)):
             raise Exception('sentence_tpl_dict must be dict')
         for intent, tpl in sentence_tpl_dict.items():
-            self.insert(tpl, common_key=common_key, build=True, intent=intent)
+            self.root = dict()
+            # self.insert(tpl, common_key=common_key, build=True, intent=intent)
+            self.insert_and_sep(tpl, common_key=common_key, build=True, intent=intent, text=text)
 
-    def insert(self, string, common_key=None, intent=None, build=None):
+    def insert_and_sep(self, string, common_key=None, intent=None, build=None, text=None):
         """
         用于建立和插入trie树。
         @params：string： 用于插入的字符串。
@@ -32,15 +34,18 @@ class SentenceTplTrie:
         word_tpl = re.findall('(?<=\[)[a-zA-Z0-9:-]+(?=\])', string)
         # 将query中的中括号去除，用于保证index没有问题。
         string = re.sub('(\[)|(\])', '', string)
+
         # 通过查询trie树，获取对应的节点的index和对应的node
+        # string 为匹配字典：common:0-6tastecommon:0-10coffee or tastephonecoffee
         index, node, _ = self.findLastNode(
             string, common_key=common_key, build=build)
+
+        # print('[index]={} and [node]={}'.format(index,node))
         # 用于获取正确的字符串
         string = string[index:]
         # 用于记录获取到的词槽的位置。
         index_word_tpl = {}
         for tpl in word_tpl:
-            print('search tpl', index, tpl, string)
             tpl_index = re.search(tpl, string).span()
             for index in tpl_index:
                 index_word_tpl[index] = tpl
@@ -60,6 +65,15 @@ class SentenceTplTrie:
             else:
                 node[char] = intent
 
+        # 直接输出匹配文本
+        _, intent, result = self.sep(text, common_key='common')
+        if isinstance(intent, str):
+            # 匹配到
+            print('[Match!]: ', intent, result)
+        else:
+            # 无匹配
+            print('[None Match]: ', intent, result)
+
     def sep(self, string, common_key=None):
         # 进行查询分割，返回值为，查询到的最后的节点，后面的字符串，以及匹配到的结果
         # 最后的匹配结果最为重要，采用元祖的形式返回。
@@ -77,6 +91,7 @@ class SentenceTplTrie:
         if common_key is None:
             common_key = ''
         node = self.root
+
         index = 0
         result = []
         while index < len(string):
@@ -88,10 +103,11 @@ class SentenceTplTrie:
                 tmp_node_key = tmp_node_key[0]
             else:
                 tmp_node_key = ''
+            # print('if:'+str(common_key)+':'+str(tmp_node_key))
             if common_key and common_key in tmp_node_key:
                 # 如果存在common_key， 那么进行common key的获取。
                 node = node[tmp_node_key]
-                print('tmp_node_key', tmp_node_key, common_key)
+                # print('tmp_node_key', tmp_node_key, common_key)
                 begin, end = tmp_node_key.split(':')[-1].split('-')
                 # 进行字符串的通配符匹配，直到获取到对应的内容，或者没有货渠道任何内容。
                 for i in range(int(begin), int(end) + 1):
@@ -107,9 +123,10 @@ class SentenceTplTrie:
             else:
                 ttk, ttv = self.map(
                     tmp_string, common_key=common_key, build=build)
-                print('ttk,ttv', ttk, ttv, tmp_string)
-
+                # print('ttk,ttv', ttk, ttv, tmp_string)
+            # print('ttk,ttv', ttk, ttv)
             if ttk and ttv:
+                # print('mode1:',node)
                 if ttk not in node:
                     # 如果正则表达式匹配到了内容，但是匹配到的不是当前节点，则index+1继续匹配。
                     index += 1
@@ -119,10 +136,14 @@ class SentenceTplTrie:
                 result.append((ttk, ttv))
             elif char in node:
                 node = node[char]
-                print(node)
+                # print('mode2:',node)
+                index += 1
+            elif len(tmp_string) > 0 and build == False:
+                # print('mode4:', node)
                 index += 1
             else:
-                print('breaking', string, node, result, index)
+                # print('mode3:',node)
+                # print('breaking', string, node, result, index)
                 break
             if isinstance(node, str):
                 break
@@ -130,13 +151,15 @@ class SentenceTplTrie:
 
     def map(self, string, common_key=None, build=None):
         # 查找对应的词槽对应的内容。
-        print('\nword_dict:', string, )
+        # print('word_dict0:', string, )
         for k, v in self.word_dict.items():
-            print('\nword_dict:', v, string, k)
+            # print('word_dict1:', v, string, k)
             word, _ = v.sep(string, build=build)
             if word:
-                word = v.replace_with_right(word)
-                print('\nword_dict:', string, k, word)
+                # print('have')
+                # print(word)
+                # word = v.replace_with_right(word)
+                # print('word_dict2:', string, k, word)
                 return k, word
             else:
                 continue
