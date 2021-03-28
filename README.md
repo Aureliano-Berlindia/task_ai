@@ -39,6 +39,7 @@
 ```
 ## 输出
 ```buildoutcfg
+    [Match!]:  coffee#1 [('taste', '好喝'), ('coffee', '拿铁')]
     [None Match]:  {'coke': {'phone': 'coffee#2'}} [('num', '1杯')]
     One text processed!
     [None Match]:  {'taste': {'common:0-10': {'coffee': 'coffee#1'}}} []
