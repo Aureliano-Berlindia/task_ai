@@ -72,15 +72,17 @@ class SentenceTplTrie:
             print('[Match!]: ', intent, result)
         else:
             # 无匹配
-            print('[None Match]: ', intent, result)
+            ## print('[None Match]')
+            None
 
-    def sep(self, string, common_key=None):
+    def sep(self, string, common_key=None, init_node=None):
         # 进行查询分割，返回值为，查询到的最后的节点，后面的字符串，以及匹配到的结果
         # 最后的匹配结果最为重要，采用元祖的形式返回。
-        index, node, result = self.findLastNode(string, common_key=common_key)
+        index, node, result = self.findLastNode(string, common_key=common_key, init_node=init_node)
+        print('[node]: ', node, '\n[root]: ', self.root, '\n[string]: ', string)
         return string[:index], node, result
 
-    def findLastNode(self, string, common_key=None, build=False):
+    def findLastNode(self, string, common_key=None, build=False, init_node=None):
         '''
         @param string: string to be searched
         @return: (index, node).
@@ -90,7 +92,11 @@ class SentenceTplTrie:
         '''
         if common_key is None:
             common_key = ''
-        node = self.root
+
+        if init_node is None:
+            node = self.root
+        else:
+            node = init_node
 
         index = 0
         result = []
